@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Upload, ArrowRight, ArrowLeft } from 'lucide-react'
-
-export const dynamic = 'force-dynamic'
 
 export default function OnboardingPage() {
     const [step, setStep] = useState(1)
@@ -17,7 +15,9 @@ export default function OnboardingPage() {
     const [uploading, setUploading] = useState(false)
     const [loading, setLoading] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const supabase = createClient()
+
+    // Lazy initialization of Supabase client to fix Vercel prerendering
+    const supabase = useMemo(() => createClient(), [])
     const router = useRouter()
     const cardRef = useRef<HTMLDivElement>(null)
 
@@ -36,7 +36,7 @@ export default function OnboardingPage() {
                 .single()
 
             if (profile?.username) {
-                router.push('/chat')
+                router.push('/chat/general')
             }
         }
 
@@ -63,7 +63,7 @@ export default function OnboardingPage() {
 
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) {
-                alert('Please log in first')
+                alert('hold up, you need to log in first')
                 return
             }
 
@@ -78,7 +78,7 @@ export default function OnboardingPage() {
 
             if (uploadError) {
                 console.error('Upload error:', uploadError)
-                alert(`Upload failed: ${uploadError.message}`)
+                alert(`upload failed: ${uploadError.message}`)
                 return
             }
 
@@ -89,7 +89,7 @@ export default function OnboardingPage() {
             setAvatarUrl(publicUrl)
         } catch (error: any) {
             console.error('Error:', error)
-            alert(`Error: ${error.message || 'Unknown error'}`)
+            alert(`error: ${error.message || 'something broke'}`)
         } finally {
             setUploading(false)
         }
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
 
     const handleComplete = async () => {
         if (!name || !username) {
-            alert('Please fill in all required fields')
+            alert('missing required fields (name and username)')
             return
         }
 
@@ -119,47 +119,55 @@ export default function OnboardingPage() {
 
             if (error) throw error
 
-            router.push('/chat')
+            router.push('/chat/general')
         } catch (error) {
-            alert('Error completing onboarding!')
+            alert('something went wrong during setup')
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen bg-bone flex items-center justify-center p-4">
-            <div ref={cardRef} className="w-full max-w-lg bg-cream border-2 border-charcoal rounded-xl p-8 shadow-[8px_8px_0px_#1d1d1f]">
+        <div className="min-h-screen bg-[#F7F2E9] flex items-center justify-center p-16">
+            <div ref={cardRef} className="w-full max-w-lg bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-xl p-32 shadow-[8px_8px_0px_#1D1D1F]">
 
-                <div className="flex items-center justify-center gap-2 mb-8">
+                {/* Progress Indicator */}
+                <div className="flex items-center justify-center gap-8 mb-24">
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className={`h-2 rounded-full transition-all ${i === step ? 'w-8 bg-charcoal' : 'w-2 bg-gray/30'
+                            className={`h-2 rounded-full transition-all ${i === step ? 'w-32 bg-[#1D1D1F]' : 'w-8 bg-[#8E8E93]/30'
                                 }`}
                         />
                     ))}
                 </div>
 
+                {/* Step 1: Avatar */}
                 {step === 1 && (
-                    <div className="flex flex-col items-center gap-6">
-                        <h1 className="font-display text-3xl font-bold text-charcoal">Welcome aboard!</h1>
-                        <p className="text-center text-gray font-mono">Let's set up your profile</p>
+                    <div className="flex flex-col items-center gap-24">
+                        <div className="text-center">
+                            <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-8" style={{ letterSpacing: '-0.5px' }}>
+                                so you made it this far.
+                            </h1>
+                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                                time to prove you're real
+                            </p>
+                        </div>
 
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="w-32 h-32 rounded-full border-4 border-charcoal overflow-hidden relative group cursor-pointer bg-bone hover:shadow-[8px_8px_0px_rgba(0,0,0,0.2)] transition-all"
+                            className="w-128 h-128 rounded-full border-2 border-[#1D1D1F] overflow-hidden relative group cursor-pointer bg-[#FFF9F0] hover:shadow-[8px_8px_0px_#1D1D1F] transition-all"
                         >
                             {avatarUrl ? (
                                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full bg-gray/10 flex items-center justify-center">
-                                    <Upload size={32} className="text-gray" />
+                                <div className="w-full h-full bg-[#8E8E93]/10 flex items-center justify-center">
+                                    <Upload size={48} className="text-[#8E8E93]" />
                                 </div>
                             )}
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-white text-xs font-bold">
-                                    {uploading ? 'UPLOADING...' : avatarUrl ? 'CHANGE' : 'UPLOAD'}
+                            <div className="absolute inset-0 bg-[#1D1D1F]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[#FFF9F0] text-[13px] font-semibold lowercase">
+                                    {uploading ? 'uploading...' : avatarUrl ? 'change' : 'upload'}
                                 </span>
                             </div>
                         </div>
@@ -173,99 +181,117 @@ export default function OnboardingPage() {
                             disabled={uploading}
                         />
 
-                        <button
-                            onClick={() => setStep(2)}
-                            className="mt-4 w-full bg-charcoal text-bone font-mono font-bold py-3 rounded-lg border-2 border-charcoal hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all flex items-center justify-center gap-2"
-                        >
-                            Next <ArrowRight size={20} />
-                        </button>
-                        <p className="text-xs text-gray text-center">You can skip this and add later</p>
+                        <div className="w-full flex flex-col gap-8">
+                            <button
+                                onClick={() => setStep(2)}
+                                className="w-full bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
+                            >
+                                next <ArrowRight size={20} />
+                            </button>
+                            <p className="text-[13px] text-[#8E8E93] text-center font-semibold lowercase">
+                                skip if you're boring
+                            </p>
+                        </div>
                     </div>
                 )}
 
+                {/* Step 2: Name & Username */}
                 {step === 2 && (
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-24">
                         <div>
-                            <h1 className="font-display text-3xl font-bold text-charcoal mb-2">Tell us about yourself</h1>
-                            <p className="text-gray font-mono text-sm">Choose a unique username</p>
+                            <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-8" style={{ letterSpacing: '-0.5px' }}>
+                                who are you really?
+                            </h1>
+                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                                pick a username before someone steals it
+                            </p>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="font-mono text-sm font-bold text-charcoal uppercase">Name *</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="bg-bone border-2 border-charcoal rounded-lg p-3 font-sans text-charcoal outline-none focus:shadow-[4px_4px_0px_rgba(29,29,31,0.1)] transition-shadow"
-                                placeholder="Your full name"
-                            />
+                        <div className="flex flex-col gap-16">
+                            <div className="flex flex-col gap-8">
+                                <label className="text-[13px] font-semibold text-[#1D1D1F] lowercase">name *</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-12 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#8E8E93]"
+                                    placeholder="your actual name"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-8">
+                                <label className="text-[13px] font-semibold text-[#1D1D1F] lowercase">username *</label>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-12 font-mono text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#8E8E93]"
+                                    placeholder="username_123"
+                                />
+                            </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="font-mono text-sm font-bold text-charcoal uppercase">Username *</label>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                                className="bg-bone border-2 border-charcoal rounded-lg p-3 font-mono text-charcoal outline-none focus:shadow-[4px_4px_0px_rgba(29,29,31,0.1)] transition-shadow"
-                                placeholder="username_123"
-                            />
-                        </div>
-
-                        <div className="flex gap-3 mt-4">
+                        <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(1)}
-                                className="flex-1 bg-bone text-charcoal font-mono font-bold py-3 rounded-lg border-2 border-charcoal hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
                             >
-                                <ArrowLeft size={20} /> Back
+                                <ArrowLeft size={20} /> back
                             </button>
                             <button
                                 onClick={() => setStep(3)}
                                 disabled={!name || !username}
-                                className="flex-1 bg-charcoal text-bone font-mono font-bold py-3 rounded-lg border-2 border-charcoal hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-8"
                             >
-                                Next <ArrowRight size={20} />
+                                next <ArrowRight size={20} />
                             </button>
                         </div>
                     </div>
                 )}
 
+                {/* Step 3: Bio */}
                 {step === 3 && (
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-24">
                         <div>
-                            <h1 className="font-display text-3xl font-bold text-charcoal mb-2">Add a bio</h1>
-                            <p className="text-gray font-mono text-sm">Tell others about yourself</p>
+                            <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-8" style={{ letterSpacing: '-0.5px' }}>
+                                sell yourself (optional)
+                            </h1>
+                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                                or just leave it blank, we get it
+                            </p>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="font-mono text-sm font-bold text-charcoal uppercase">Bio</label>
+                        <div className="flex flex-col gap-8">
+                            <label className="text-[13px] font-semibold text-[#1D1D1F] lowercase">bio</label>
                             <textarea
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
-                                rows={4}
+                                rows={5}
                                 maxLength={200}
-                                className="bg-bone border-2 border-charcoal rounded-lg p-3 font-sans text-charcoal outline-none focus:shadow-[4px_4px_0px_rgba(29,29,31,0.1)] transition-shadow resize-none"
-                                placeholder="I love coding and chatting..."
+                                className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-12 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow resize-none placeholder:text-[#8E8E93]"
+                                placeholder="what makes you interesting?"
                             />
-                            <span className="text-xs text-gray font-mono">{bio.length}/200 characters</span>
+                            <span className="text-[11px] text-[#8E8E93] font-semibold">{bio.length}/200</span>
                         </div>
 
-                        <div className="flex gap-3 mt-4">
+                        <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(2)}
-                                className="flex-1 bg-bone text-charcoal font-mono font-bold py-3 rounded-lg border-2 border-charcoal hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
                             >
-                                <ArrowLeft size={20} /> Back
+                                <ArrowLeft size={20} /> back
                             </button>
                             <button
                                 onClick={handleComplete}
                                 disabled={loading}
-                                className="flex-1 bg-charcoal text-bone font-mono font-bold py-3 rounded-lg border-2 border-charcoal hover:-translate-y-1 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
                             >
-                                {loading ? 'Creating...' : 'Complete Setup'}
+                                {loading ? 'setting up...' : "let's go"}
                             </button>
                         </div>
-                        <p className="text-xs text-gray text-center">You can skip and add this later</p>
+                        <p className="text-[13px] text-[#8E8E93] text-center font-semibold lowercase">
+                            seriously, this is optional
+                        </p>
                     </div>
                 )}
             </div>
