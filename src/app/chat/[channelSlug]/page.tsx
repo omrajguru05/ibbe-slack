@@ -4,7 +4,7 @@ import MessageList from '@/components/MessageList'
 import MessageInput from '@/components/MessageInput'
 import ChatHeader from '@/components/ChatHeader'
 
-export default async function ChannelPage({ params }: { params: { channelSlug: string } }) {
+export default async function ChannelPage({ params }: { params: Promise<{ channelSlug: string }> }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -12,7 +12,8 @@ export default async function ChannelPage({ params }: { params: { channelSlug: s
         redirect('/login')
     }
 
-    const { channelSlug } = params
+    const { channelSlug } = await params
+    console.log('Channel Page Loaded:', channelSlug)
 
     // Fetch channel by slug
     const { data: channel, error } = await supabase
