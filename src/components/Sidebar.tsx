@@ -1,16 +1,19 @@
 'use client'
 
-import { LogOut, Plus, Hash } from 'lucide-react'
+import { LogOut, Plus, Hash, X } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import CreateChannelModal from './CreateChannelModal'
+import UserProfileModal from './UserProfileModal'
+import { useSidebar } from '@/context/SidebarContext'
 
 interface Profile {
     id: string
     username: string
     avatar_url: string
     status: 'online' | 'offline' | 'busy'
+    bio?: string
 }
 
 interface Channel {
@@ -25,9 +28,11 @@ export default function Sidebar() {
     const [channels, setChannels] = useState<Channel[]>([])
     const [currentUserId, setCurrentUserId] = useState<string>('')
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [selectedUser, setSelectedUser] = useState<Profile | null>(null)
     const supabase = createClient()
     const router = useRouter()
     const pathname = usePathname()
+    const { isOpen, close } = useSidebar()
 
     const currentChannelSlug = pathname?.split('/')[2] || 'general'
 
@@ -46,7 +51,7 @@ export default function Sidebar() {
             const fetchUsers = async () => {
                 const { data } = await supabase
                     .from('profiles')
-                    .select('id, username, avatar_url, status')
+                    .select('id, username, avatar_url, status, bio')
                     .order('username')
 
                 if (data) {
@@ -137,16 +142,38 @@ export default function Sidebar() {
         router.push('/login')
     }
 
+    const handleUserClick = (user: Profile) => {
+        setSelectedUser(user)
+    }
+
     const onlineUsers = users.filter(u => u.status === 'online')
     const offlineUsers = users.filter(u => u.status === 'offline' || u.status === 'busy')
 
+    const currentUserProfile = users.find(u => u.id === currentUserId) || null
+
     return (
         <>
-            <div className="w-[280px] border-r-2 border-charcoal bg-cream flex-col hidden md:flex">
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={close}
+                />
+            )}
+
+            <div className={`
+                fixed inset-y-0 left-0 z-50 w-[280px] border-r-2 border-charcoal bg-cream flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
                 {/* Header */}
-                <div className="h-20 border-b-2 border-charcoal flex items-center px-6 flex-shrink-0">
-                    <div className="w-3 h-3 rounded-full bg-charcoal mr-2"></div>
-                    <h1 className="font-display text-xl font-bold tracking-tight">IBBE_SLACK</h1>
+                <div className="h-20 border-b-2 border-charcoal flex items-center justify-between px-6 flex-shrink-0">
+                    <div className="flex items-center">
+                        <div className="w-3 h-3 rounded-full bg-charcoal mr-2"></div>
+                        <h1 className="font-display text-xl font-bold tracking-tight">IBBE_SLACK</h1>
+                    </div>
+                    <button onClick={close} className="md:hidden p-1 hover:bg-bone rounded-full">
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {/* Channels */}
@@ -166,7 +193,10 @@ export default function Sidebar() {
                             {channels.map((channel) => (
                                 <div
                                     key={channel.id}
-                                    onClick={() => router.push(`/chat/${channel.slug}`)}
+                                    onClick={() => {
+                                        router.push(`/chat/${channel.slug}`)
+                                        close()
+                                    }}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all hover:bg-bone border-2 ${currentChannelSlug === channel.slug
                                         ? 'bg-bone border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]'
                                         : 'border-transparent'
@@ -186,7 +216,11 @@ export default function Sidebar() {
                         </div>
                         <div className="flex flex-col gap-1">
                             {onlineUsers.map((user) => (
-                                <div key={user.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors">
+                                <div
+                                    key={user.id}
+                                    onClick={() => handleUserClick(user)}
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors cursor-pointer"
+                                >
                                     <div className="relative">
                                         <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden bg-gray-200 flex items-center justify-center">
                                             {user.avatar_url ? (
@@ -213,7 +247,11 @@ export default function Sidebar() {
                             </div>
                             <div className="flex flex-col gap-1">
                                 {offlineUsers.map((user) => (
-                                    <div key={user.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors opacity-60">
+                                    <div
+                                        key={user.id}
+                                        onClick={() => handleUserClick(user)}
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors opacity-60 cursor-pointer"
+                                    >
                                         <div className="relative">
                                             <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden bg-gray-200 flex items-center justify-center">
                                                 {user.avatar_url ? (
@@ -257,6 +295,13 @@ export default function Sidebar() {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onChannelCreated={() => { }}
+            />
+
+            <UserProfileModal
+                isOpen={!!selectedUser}
+                onClose={() => setSelectedUser(null)}
+                user={selectedUser}
+                currentUser={currentUserProfile}
             />
         </>
     )

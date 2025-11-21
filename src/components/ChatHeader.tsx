@@ -1,5 +1,8 @@
-import Link from 'next/link'
-import { Settings } from 'lucide-react'
+'use client'
+
+import { Settings, Menu } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useSidebar } from '@/context/SidebarContext'
 
 interface ChatHeaderProps {
     channelName: string
@@ -7,20 +10,36 @@ interface ChatHeaderProps {
 }
 
 export default function ChatHeader({ channelName, channelSlug }: ChatHeaderProps) {
+    const router = useRouter()
+    const { toggle } = useSidebar()
+
     return (
-        <div className="h-20 border-b-2 border-charcoal bg-bone flex items-center justify-between px-8 flex-shrink-0">
+        <div className="h-20 border-b-2 border-charcoal flex items-center justify-between px-6 bg-bone flex-shrink-0">
             <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold text-charcoal">#</span>
+                <button
+                    onClick={toggle}
+                    className="md:hidden p-2 -ml-2 hover:bg-cream rounded-lg transition-colors"
+                >
+                    <Menu size={20} />
+                </button>
                 <div>
-                    <h2 className="font-display text-xl font-bold text-charcoal">{channelName}</h2>
-                    <p className="text-xs font-mono text-gray uppercase">3 members • online</p>
+                    <div className="flex items-center gap-2">
+                        <h2 className="font-display text-xl font-bold"># {channelName}</h2>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-gray uppercase tracking-wider">
+                        <span>3 Members</span>
+                        <span>•</span>
+                        <span>Online</span>
+                    </div>
                 </div>
             </div>
-            <Link href="/profile">
-                <div className="w-11 h-11 rounded-full border-2 border-charcoal bg-bone flex items-center justify-center cursor-pointer hover:bg-cream transition-colors">
-                    <Settings size={20} className="text-charcoal" />
-                </div>
-            </Link>
+
+            <button
+                onClick={() => router.push('/profile')}
+                className="w-10 h-10 rounded-full border-2 border-charcoal flex items-center justify-center hover:bg-cream transition-colors"
+            >
+                <Settings size={20} />
+            </button>
         </div>
     )
 }
