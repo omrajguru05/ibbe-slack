@@ -4,6 +4,10 @@ import { useEffect, useRef, useState, ChangeEvent } from 'react'
 import { gsap } from 'gsap'
 import { createClient } from '@/utils/supabase/client'
 
+interface TypingUser {
+    username: string
+}
+
 interface MessageInputProps {
     channelId?: string
     userId: string
@@ -12,48 +16,98 @@ interface MessageInputProps {
 export default function MessageInput({ channelId, userId }: MessageInputProps) {
     const [message, setMessage] = useState('')
     const [isUploading, setIsUploading] = useState(false)
+    const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
     const typingIndicatorRef = useRef<HTMLDivElement>(null)
     const typingTextRef = useRef<HTMLSpanElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const typingTimeoutRef = useRef<NodeJS.Timeout>()
     const supabase = createClient()
 
     useEffect(() => {
-        const stories = [
-            "anzilah is typing...",
-            "wait, she's deleting it...",
-            "anzilah is typing a novel...",
-            "she's probably correcting your grammar...",
-            "anzilah paused to judge you...",
-            "okay, she's actually typing now..."
-        ]
-        let storyIndex = 0
+        if (!channelId) return
 
-        const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.5 })
+        // Subscribe to typing indicators
+        const channel = supabase
+            .channel('typing-indicators')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'typing_indicators',
+                    filter: `channel_id=eq.${channelId}`,
+                },
+                async () => {
+                    // Fetch current typing users
+                    const { data } = await supabase
+                        .from('typing_indicators')
+                        .select('user_id, profiles(username)')
+                        .eq('channel_id', channelId)
+                        .neq('user_id', userId) // Exclude current user
 
-        // Initial fade in
-        gsap.to(typingIndicatorRef.current, { opacity: 1, duration: 0.3 })
-
-        const interval = setInterval(() => {
-            storyIndex = (storyIndex + 1) % stories.length
-
-            gsap.to(typingTextRef.current, {
-                y: -10,
-                opacity: 0,
-                duration: 0.3,
-                onComplete: () => {
-                    if (typingTextRef.current) {
-                        typingTextRef.current.innerText = stories[storyIndex]
-                        gsap.fromTo(typingTextRef.current,
-                            { y: 10, opacity: 0 },
-                            { y: 0, opacity: 1, duration: 0.3 }
-                        )
+                    if (data) {
+                        const users = data.map((item: any) => ({
+                            username: item.profiles?.username || 'Someone'
+                        }))
+                        setTypingUsers(users)
                     }
                 }
-            })
-        }, 2500)
+            )
+            .subscribe()
 
-        return () => clearInterval(interval)
-    }, [])
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [channelId, userId, supabase])
+
+    useEffect(() => {
+        // Animate typing indicator
+        if (typingUsers.length > 0 && typingIndicatorRef.current) {
+            gsap.to(typingIndicatorRef.current, { opacity: 1, duration: 0.3 })
+        } else if (typingIndicatorRef.current) {
+            gsap.to(typingIndicatorRef.current, { opacity: 0, duration: 0.3 })
+        }
+    }, [typingUsers])
+
+    const handleTyping = async (value: string) => {
+        setMessage(value)
+
+        if (!channelId || !value.trim()) {
+            // Remove typing indicator if message is empty
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current)
+            }
+            await supabase
+                .from('typing_indicators')
+                .delete()
+                .eq('channel_id', channelId)
+                .eq('user_id', userId)
+            return
+        }
+
+        // Insert or update typing indicator
+        await supabase
+            .from('typing_indicators')
+            .upsert({
+                channel_id: channelId,
+                user_id: userId,
+                created_at: new Date().toISOString()
+            })
+
+        // Clear existing timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current)
+        }
+
+        // Remove typing indicator after 3 seconds of inactivity
+        typingTimeoutRef.current = setTimeout(async () => {
+            await supabase
+                .from('typing_indicators')
+                .delete()
+                .eq('channel_id', channelId)
+                .eq('user_id', userId)
+        }, 3000)
+    }
 
     const handleSend = async () => {
         if (!message.trim() || !channelId) return
@@ -61,6 +115,14 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
         const content = message
         setMessage('')
 
+        // Remove typing indicator
+        await supabase
+            .from('typing_indicators')
+            .delete()
+            .eq('channel_id', channelId)
+            .eq('user_id', userId)
+
+        // Send message
         await supabase.from('messages').insert({
             content,
             channel_id: channelId,
@@ -94,7 +156,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
 
         // Send message with attachment
         await supabase.from('messages').insert({
-            content: '', // Empty content for file-only message, or could be filename
+            content: file.name,
             channel_id: channelId,
             user_id: userId,
             attachments: [{ type: 'image', url: publicUrl, name: file.name }]
@@ -102,6 +164,13 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
 
         setIsUploading(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    const getTypingText = () => {
+        if (typingUsers.length === 0) return ''
+        if (typingUsers.length === 1) return `${typingUsers[0].username} is typing...`
+        if (typingUsers.length === 2) return `${typingUsers[0].username} and ${typingUsers[1].username} are typing...`
+        return `${typingUsers.length} people are typing...`
     }
 
     return (
@@ -114,7 +183,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
                     <span className="w-1 h-1 bg-gray rounded-full animate-bounce [animation-delay:-0.16s]"></span>
                     <span className="w-1 h-1 bg-gray rounded-full animate-bounce"></span>
                 </div>
-                <span ref={typingTextRef}>anzilah is typing...</span>
+                <span ref={typingTextRef}>{getTypingText()}</span>
             </div>
 
             <div className="flex gap-3">
@@ -141,7 +210,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
                 <input
                     type="text"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={(e) => handleTyping(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     className="flex-1 bg-cream border-2 border-charcoal rounded-2xl p-3.5 px-5 font-sans text-[15px] text-charcoal outline-none transition-shadow focus:shadow-[0_0_0_4px_rgba(29,29,31,0.1)]"
                     placeholder="type something risky..."

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { createClient } from '@/utils/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { SmilePlus } from 'lucide-react'
+import { SmilePlus, Trash2 } from 'lucide-react'
 
 interface Attachment {
     type: 'image' | 'file'
@@ -95,6 +95,17 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
             .on(
                 'postgres_changes',
                 {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'messages',
+                },
+                (payload) => {
+                    setMessages((prev) => prev.filter(m => m.id !== payload.old.id))
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
                     event: '*',
                     schema: 'public',
                     table: 'reactions',
@@ -136,6 +147,12 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                 user_id: currentUser.id,
                 emoji
             })
+        }
+    }
+
+    const handleDelete = async (messageId: string) => {
+        if (confirm('Delete this message?')) {
+            await supabase.from('messages').delete().eq('id', messageId)
         }
     }
 
@@ -187,8 +204,9 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                                 )}
                                 {msg.content && <span>{msg.content}</span>}
 
-                                {/* Reaction Button (Hover) */}
-                                <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-10' : '-right-10'} opacity-0 group-hover:opacity-100 transition-opacity`}>
+                                {/* Action Buttons (Hover) */}
+                                <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-20' : '-right-20'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1`}>
+                                    {/* Reaction Button */}
                                     <div className="relative group/picker">
                                         <button className="p-1.5 rounded-full bg-cream border border-charcoal hover:bg-bone transition-colors">
                                             <SmilePlus size={16} className="text-charcoal" />
@@ -205,6 +223,17 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* Delete Button (only for own messages) */}
+                                    {isMe && (
+                                        <button
+                                            onClick={() => handleDelete(msg.id)}
+                                            className="p-1.5 rounded-full bg-red-100 border border-red-400 hover:bg-red-200 transition-colors"
+                                            title="Delete message"
+                                        >
+                                            <Trash2 size={16} className="text-red-600" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
