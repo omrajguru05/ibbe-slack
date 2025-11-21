@@ -13,8 +13,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ibbe chat",
-  description: "ultimate edition",
+  title: "IBBE_SLACK",
+  description: "the chat app for people who actually get work done. probably.",
+  icons: {
+    icon: '/favicon.png',
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

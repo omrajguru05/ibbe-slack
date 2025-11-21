@@ -41,12 +41,26 @@ interface Message {
 interface MessageListProps {
     channelId?: string
     currentUser: User
+    onAddMessage?: (callback: (msg: Message) => void) => void
 }
 
-export default function MessageList({ channelId, currentUser, onReply }: MessageListProps & { onReply?: (msg: Message) => void }) {
+export default function MessageList({ channelId, currentUser, onReply, onAddMessage }: MessageListProps & { onReply?: (msg: Message) => void }) {
     const [messages, setMessages] = useState<Message[]>([])
     const containerRef = useRef<HTMLDivElement>(null)
     const supabase = createClient()
+
+    // Expose addMessage function to parent
+    useEffect(() => {
+        if (onAddMessage) {
+            onAddMessage((msg: Message) => {
+                setMessages(prev => {
+                    // Avoid duplicates
+                    if (prev.some(m => m.id === msg.id)) return prev
+                    return [...prev, msg]
+                })
+            })
+        }
+    }, [onAddMessage])
 
     useEffect(() => {
         console.log('MessageList mounted, channelId:', channelId)

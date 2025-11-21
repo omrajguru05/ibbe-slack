@@ -88,8 +88,8 @@ export default function LoginPage() {
                 {/* LEFT: The Form */}
                 <div className="flex-1 bg-bone border-2 border-charcoal rounded-3xl p-12 flex flex-col shadow-[8px_8px_0px_rgba(29,29,31,0.05)] relative overflow-hidden">
                     <div className="mb-8">
-                        <div className="w-12 h-12 bg-charcoal text-bone rounded-xl flex items-center justify-center text-2xl mb-6">
-                            ✦
+                        <div className="w-16 h-16 mb-6 flex items-center justify-center">
+                            <img src="/logo.png" alt="IBBE" className="w-full h-full object-contain" />
                         </div>
                         <h1 className="text-3xl font-extrabold tracking-tight mb-2 leading-tight">
                             {isLogin ? 'welcome back, human.' : 'join the resistance.'}
@@ -139,10 +139,13 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-charcoal text-bone font-bold py-4 rounded-xl border-2 border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+                            className="w-full bg-charcoal text-bone font-bold py-4 rounded-xl border-2 border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 group"
                         >
                             {loading ? (
-                                <span className="animate-pulse">processing...</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 border-2 border-bone border-t-transparent rounded-full animate-spin"></div>
+                                    <span>processing...</span>
+                                </div>
                             ) : (
                                 <>
                                     <span>{isLogin ? 'enter the void' : 'initiate sequence'}</span>
@@ -164,7 +167,7 @@ export default function LoginPage() {
                             await signInWithGoogle()
                         }}
                         disabled={loading}
-                        className="w-full bg-white text-charcoal font-bold py-3 rounded-xl border-2 border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,0.1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-3"
+                        className="w-full bg-white text-charcoal font-bold py-3 rounded-xl border-2 border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,0.1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                             <path
@@ -191,7 +194,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => setIsLogin(!isLogin)}
-                            className="text-sm font-bold underline decoration-2 decoration-charcoal/30 hover:decoration-charcoal transition-all"
+                            className="text-sm font-bold underline decoration-2 decoration-charcoal/30 hover:decoration-charcoal transition-all cursor-pointer"
                         >
                             {isLogin ? "don't have an account? join us." : "already have an account? login."}
                         </button>

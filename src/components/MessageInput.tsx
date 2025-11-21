@@ -13,9 +13,10 @@ interface MessageInputProps {
     userId: string
     replyTo?: any
     onCancelReply?: () => void
+    onMessageSent?: (message: any) => void
 }
 
-export default function MessageInput({ channelId, userId, replyTo, onCancelReply }: MessageInputProps) {
+export default function MessageInput({ channelId, userId, replyTo, onCancelReply, onMessageSent }: MessageInputProps) {
     const [message, setMessage] = useState('')
     const [caption, setCaption] = useState('')
     const [isUploading, setIsUploading] = useState(false)
@@ -163,7 +164,26 @@ export default function MessageInput({ channelId, userId, replyTo, onCancelReply
             setIsUploading(false)
         }
 
-        // Send message
+        // Create optimistic message for instant UI update
+        const optimisticMessage = {
+            id: crypto.randomUUID(),
+            channel_id: channelId,
+            user_id: userId,
+            content: content || (attachments.length > 0 ? 'Sent an image' : ''),
+            created_at: new Date().toISOString(),
+            attachments: attachments.length > 0 ? attachments : null,
+            parent_id: replyTo?.id || null,
+            profiles: { username: 'You', avatar_url: null },
+            reactions: [],
+            message_reads: []
+        }
+
+        // Add to UI immediately
+        if (onMessageSent) {
+            onMessageSent(optimisticMessage)
+        }
+
+        // Send to database in background
         await supabase.from('messages').insert({
             content: content || (attachments.length > 0 ? 'Sent an image' : ''),
             channel_id: channelId,

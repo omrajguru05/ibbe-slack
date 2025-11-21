@@ -133,6 +133,13 @@ export default function OnboardingPage() {
         <div className="min-h-screen bg-[#F7F2E9] flex items-center justify-center p-4">
             <div ref={cardRef} className="w-full max-w-lg bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-xl p-8 shadow-[8px_8px_0px_#1D1D1F]">
 
+                {/* Logo */}
+                <div className="flex justify-center mb-6">
+                    <div className="w-16 h-16 flex items-center justify-center">
+                        <img src="/logo.png" alt="IBBE" className="w-full h-full object-contain" />
+                    </div>
+                </div>
+
                 {/* Progress Indicator */}
                 <div className="flex items-center justify-center gap-2 mb-6">
                     {[1, 2, 3].map((i) => (
@@ -186,7 +193,7 @@ export default function OnboardingPage() {
                         <div className="w-full flex flex-col gap-2">
                             <button
                                 onClick={() => setStep(2)}
-                                className="w-full bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 next <ArrowRight size={20} />
                             </button>
@@ -236,14 +243,14 @@ export default function OnboardingPage() {
                         <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(1)}
-                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8 cursor-pointer"
                             >
                                 <ArrowLeft size={20} /> back
                             </button>
                             <button
                                 onClick={() => setStep(3)}
                                 disabled={!name || !username}
-                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 next <ArrowRight size={20} />
                             </button>
@@ -279,16 +286,23 @@ export default function OnboardingPage() {
                         <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(2)}
-                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8 cursor-pointer"
                             >
                                 <ArrowLeft size={20} /> back
                             </button>
                             <button
                                 onClick={handleComplete}
                                 disabled={loading}
-                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                                className="flex-1 bg-[#1D1D1F] text-[#FFF9F0] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2 cursor-pointer"
                             >
-                                {loading ? 'setting up...' : "let's go"}
+                                {loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-5 h-5 border-2 border-[#FFF9F0] border-t-transparent rounded-full animate-spin"></div>
+                                        <span>setting up...</span>
+                                    </div>
+                                ) : (
+                                    "let's go"
+                                )}
                             </button>
                         </div>
                         <p className="text-[13px] text-[#1D1D1F]/60 text-center font-semibold lowercase">
