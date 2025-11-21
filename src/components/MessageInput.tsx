@@ -11,11 +11,16 @@ interface TypingUser {
 interface MessageInputProps {
     channelId?: string
     userId: string
+    replyTo?: any
+    onCancelReply?: () => void
 }
 
-export default function MessageInput({ channelId, userId }: MessageInputProps) {
+export default function MessageInput({ channelId, userId, replyTo, onCancelReply }: MessageInputProps) {
     const [message, setMessage] = useState('')
+    const [caption, setCaption] = useState('')
     const [isUploading, setIsUploading] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const [typingUsers, setTypingUsers] = useState<TypingUser[]>([])
     const typingIndicatorRef = useRef<HTMLDivElement>(null)
     const typingTextRef = useRef<HTMLSpanElement>(null)
@@ -92,7 +97,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
                 channel_id: channelId,
                 user_id: userId,
                 created_at: new Date().toISOString()
-            })
+            }, { onConflict: 'channel_id,user_id' })
 
         // Clear existing timeout
         if (typingTimeoutRef.current) {
@@ -110,10 +115,15 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
     }
 
     const handleSend = async () => {
-        if (!message.trim() || !channelId) return
+        if ((!message.trim() && !selectedFile) || !channelId) return
 
         const content = message
+        const currentCaption = caption
         setMessage('')
+        setCaption('')
+        setSelectedFile(null)
+        setPreviewUrl(null)
+        if (onCancelReply) onCancelReply()
 
         // Remove typing indicator
         await supabase
@@ -122,47 +132,52 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
             .eq('channel_id', channelId)
             .eq('user_id', userId)
 
+        let attachments = []
+
+        if (selectedFile) {
+            setIsUploading(true)
+            const fileExt = selectedFile.name.split('.').pop()
+            const fileName = `${Math.random()}.${fileExt}`
+            const filePath = `${channelId}/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('chat-attachments')
+                .upload(filePath, selectedFile)
+
+            if (uploadError) {
+                console.error('Error uploading file:', uploadError)
+                setIsUploading(false)
+                return
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('chat-attachments')
+                .getPublicUrl(filePath)
+
+            attachments.push({
+                type: 'image',
+                url: publicUrl,
+                name: selectedFile.name,
+                caption: currentCaption
+            })
+            setIsUploading(false)
+        }
+
         // Send message
         await supabase.from('messages').insert({
-            content,
+            content: content || (attachments.length > 0 ? 'Sent an image' : ''),
             channel_id: channelId,
-            user_id: userId
+            user_id: userId,
+            attachments: attachments.length > 0 ? attachments : null,
+            parent_id: replyTo?.id || null
         })
     }
 
-    const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !channelId) return
-
+    const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return
         const file = e.target.files[0]
-        setIsUploading(true)
-
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${channelId}/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-            .from('chat-attachments')
-            .upload(filePath, file)
-
-        if (uploadError) {
-            console.error('Error uploading file:', uploadError)
-            setIsUploading(false)
-            return
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('chat-attachments')
-            .getPublicUrl(filePath)
-
-        // Send message with attachment
-        await supabase.from('messages').insert({
-            content: file.name,
-            channel_id: channelId,
-            user_id: userId,
-            attachments: [{ type: 'image', url: publicUrl, name: file.name }]
-        })
-
-        setIsUploading(false)
+        setSelectedFile(file)
+        setPreviewUrl(URL.createObjectURL(file))
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
@@ -175,6 +190,46 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
 
     return (
         <div className="p-6 px-8 bg-bone border-t-2 border-charcoal flex flex-col gap-3">
+
+            {/* Reply Banner */}
+            {replyTo && (
+                <div className="flex items-center justify-between bg-cream border-2 border-charcoal rounded-xl p-3 mb-2 animate-in slide-in-from-bottom-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1 h-8 bg-charcoal rounded-full"></div>
+                        <div className="text-sm">
+                            <span className="font-bold text-charcoal">Replying to {replyTo.profiles?.username}</span>
+                            <div className="text-gray truncate max-w-[200px]">{replyTo.content}</div>
+                        </div>
+                    </div>
+                    <button onClick={onCancelReply} className="p-1 hover:bg-bone rounded-full">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            )}
+
+            {/* Image Preview */}
+            {previewUrl && (
+                <div className="relative w-fit mb-2 group">
+                    <img src={previewUrl} alt="Preview" className="h-32 rounded-xl border-2 border-charcoal object-cover" />
+                    <button
+                        onClick={() => {
+                            setSelectedFile(null)
+                            setPreviewUrl(null)
+                            setCaption('')
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 border-2 border-charcoal hover:scale-110 transition-transform"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <input
+                        type="text"
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        placeholder="add a caption..."
+                        className="absolute bottom-2 left-2 right-2 bg-white/90 border border-charcoal rounded-lg px-2 py-1 text-xs outline-none"
+                    />
+                </div>
+            )}
 
             {/* Typing Indicator */}
             <div className="text-xs text-gray font-semibold h-5 flex items-center gap-2 opacity-0" ref={typingIndicatorRef}>
@@ -197,7 +252,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="w-[52px] h-[52px] bg-cream border-2 border-charcoal rounded-2xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 disabled:opacity-50"
+                    className={`w-[52px] h-[52px] bg-cream border-2 border-charcoal rounded-2xl flex items-center justify-center cursor-pointer transition-transform hover:scale-105 disabled:opacity-50 ${selectedFile ? 'bg-charcoal text-bone' : ''}`}
                     title="Upload Image"
                 >
                     {isUploading ? (
@@ -213,7 +268,8 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
                     onChange={(e) => handleTyping(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     className="flex-1 bg-cream border-2 border-charcoal rounded-2xl p-3.5 px-5 font-sans text-[15px] text-charcoal outline-none transition-shadow focus:shadow-[0_0_0_4px_rgba(29,29,31,0.1)]"
-                    placeholder="type something risky..."
+                    placeholder={replyTo ? `replying to ${replyTo.profiles?.username}...` : "type something risky..."}
+                    autoFocus={!!replyTo}
                 />
                 <button
                     onClick={handleSend}

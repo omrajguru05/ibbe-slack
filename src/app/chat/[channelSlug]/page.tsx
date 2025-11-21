@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import MessageList from '@/components/MessageList'
 import MessageInput from '@/components/MessageInput'
 import ChatHeader from '@/components/ChatHeader'
+import ChatArea from '@/components/ChatArea'
 
 export default async function ChannelPage({ params }: { params: Promise<{ channelSlug: string }> }) {
     const supabase = await createClient()
@@ -37,8 +38,7 @@ export default async function ChannelPage({ params }: { params: Promise<{ channe
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             <ChatHeader channelName={channel.name} channelSlug={channel.slug} />
-            <MessageList channelId={channel.id} currentUser={user} />
-            <MessageInput channelId={channel.id} userId={user.id} />
+            <ChatArea channelId={channel.id} currentUser={user} />
         </div>
     )
 }

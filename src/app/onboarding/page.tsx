@@ -151,7 +151,7 @@ export default function OnboardingPage() {
                             <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-2" style={{ letterSpacing: '-0.5px' }}>
                                 so you made it this far.
                             </h1>
-                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                            <p className="text-[15px] text-[#1D1D1F]/60 font-normal leading-[1.5]">
                                 time to prove you're real
                             </p>
                         </div>
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
                                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-[#8E8E93]/10 flex items-center justify-center">
-                                    <Upload size={48} className="text-[#8E8E93]" />
+                                    <Upload size={48} className="text-[#1D1D1F]/60" />
                                 </div>
                             )}
                             <div className="absolute inset-0 bg-[#1D1D1F]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -190,7 +190,7 @@ export default function OnboardingPage() {
                             >
                                 next <ArrowRight size={20} />
                             </button>
-                            <p className="text-[13px] text-[#8E8E93] text-center font-semibold lowercase">
+                            <p className="text-[13px] text-[#1D1D1F]/60 text-center font-semibold lowercase">
                                 skip if you're boring
                             </p>
                         </div>
@@ -204,7 +204,7 @@ export default function OnboardingPage() {
                             <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-2" style={{ letterSpacing: '-0.5px' }}>
                                 who are you really?
                             </h1>
-                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                            <p className="text-[15px] text-[#1D1D1F]/60 font-normal leading-[1.5]">
                                 pick a username before someone steals it
                             </p>
                         </div>
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#8E8E93]"
+                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#1D1D1F]/60"
                                     placeholder="your actual name"
                                 />
                             </div>
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-mono text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#8E8E93]"
+                                    className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-mono text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow placeholder:text-[#1D1D1F]/60"
                                     placeholder="username_123"
                                 />
                             </div>
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
                         <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(1)}
-                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
                             >
                                 <ArrowLeft size={20} /> back
                             </button>
@@ -258,7 +258,7 @@ export default function OnboardingPage() {
                             <h1 className="font-sans text-[32px] font-extrabold text-[#1D1D1F] leading-[1.1] mb-2" style={{ letterSpacing: '-0.5px' }}>
                                 sell yourself (optional)
                             </h1>
-                            <p className="text-[15px] text-[#8E8E93] font-normal leading-[1.5]">
+                            <p className="text-[15px] text-[#1D1D1F]/60 font-normal leading-[1.5]">
                                 or just leave it blank, we get it
                             </p>
                         </div>
@@ -270,16 +270,16 @@ export default function OnboardingPage() {
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={5}
                                 maxLength={200}
-                                className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow resize-none placeholder:text-[#8E8E93]"
+                                className="bg-[#FFF9F0] border-2 border-[#1D1D1F] rounded-lg p-3 font-normal text-[16px] text-[#1D1D1F] outline-none focus:shadow-[4px_4px_0px_#1D1D1F] transition-shadow resize-none placeholder:text-[#1D1D1F]/60"
                                 placeholder="what makes you interesting?"
                             />
-                            <span className="text-[11px] text-[#8E8E93] font-semibold">{bio.length}/200</span>
+                            <span className="text-[11px] text-[#1D1D1F]/60 font-semibold">{bio.length}/200</span>
                         </div>
 
                         <div className="flex gap-12">
                             <button
                                 onClick={() => setStep(2)}
-                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-12 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
+                                className="flex-1 bg-[#FFF9F0] text-[#1D1D1F] font-semibold text-[16px] py-3 rounded-lg border-2 border-[#1D1D1F] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#1D1D1F] transition-all flex items-center justify-center gap-8"
                             >
                                 <ArrowLeft size={20} /> back
                             </button>
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
                                 {loading ? 'setting up...' : "let's go"}
                             </button>
                         </div>
-                        <p className="text-[13px] text-[#8E8E93] text-center font-semibold lowercase">
+                        <p className="text-[13px] text-[#1D1D1F]/60 text-center font-semibold lowercase">
                             seriously, this is optional
                         </p>
                     </div>

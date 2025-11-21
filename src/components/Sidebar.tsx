@@ -271,23 +271,34 @@ export default function Sidebar() {
                 </div>
 
                 {/* User Footer */}
-                <div className="p-4 border-t-2 border-charcoal bg-bone">
-                    <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-cream cursor-pointer transition-colors group" onClick={handleLogout}>
-                        <div className="w-8 h-8 rounded-full bg-charcoal overflow-hidden relative flex items-center justify-center">
+                <div className="p-4 border-t-2 border-charcoal bg-bone flex items-center justify-between">
+                    <div
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-cream cursor-pointer transition-colors flex-1 min-w-0"
+                        onClick={() => {
+                            const user = users.find(u => u.id === currentUserId)
+                            if (user) router.push(`/u/${user.username}`)
+                        }}
+                    >
+                        <div className="w-10 h-10 rounded-full border-2 border-charcoal overflow-hidden relative flex items-center justify-center bg-white">
                             {users.find(u => u.id === currentUserId)?.avatar_url ? (
                                 <img src={users.find(u => u.id === currentUserId)?.avatar_url} alt="User" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-sm font-bold text-bone">{users.find(u => u.id === currentUserId)?.username?.[0]?.toUpperCase() || 'U'}</span>
+                                <span className="text-sm font-bold text-charcoal">{users.find(u => u.id === currentUserId)?.username?.[0]?.toUpperCase() || 'U'}</span>
                             )}
-                            <div className="absolute inset-0 bg-black/20 hidden group-hover:flex items-center justify-center">
-                                <LogOut size={12} className="text-white" />
-                            </div>
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="font-bold text-sm truncate">{users.find(u => u.id === currentUserId)?.username || 'You'}</div>
                             <div className="text-[10px] font-mono text-gray">Online</div>
                         </div>
                     </div>
+
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 rounded-lg hover:bg-cream text-charcoal transition-colors border-2 border-transparent hover:border-charcoal"
+                        title="Logout"
+                    >
+                        <LogOut size={18} />
+                    </button>
                 </div>
             </div>
 

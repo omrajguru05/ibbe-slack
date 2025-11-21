@@ -19,6 +19,11 @@ interface Reaction {
     emoji: string
 }
 
+interface MessageRead {
+    user_id: string
+    read_at: string
+}
+
 interface Message {
     id: string
     user_id: string
@@ -30,6 +35,7 @@ interface Message {
         avatar_url: string
     }
     reactions?: Reaction[]
+    message_reads?: MessageRead[]
 }
 
 interface MessageListProps {
@@ -37,23 +43,41 @@ interface MessageListProps {
     currentUser: User
 }
 
-export default function MessageList({ channelId, currentUser }: MessageListProps) {
+export default function MessageList({ channelId, currentUser, onReply }: MessageListProps & { onReply?: (msg: Message) => void }) {
     const [messages, setMessages] = useState<Message[]>([])
     const containerRef = useRef<HTMLDivElement>(null)
     const supabase = createClient()
 
     useEffect(() => {
+        console.log('MessageList mounted, channelId:', channelId)
         if (!channelId) return
 
         const fetchMessages = async () => {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('messages')
-                .select('*, profiles(username, avatar_url), reactions(*)')
+                .select('*, profiles(username, avatar_url), reactions(*), parent:messages(id, content, profiles(username)), message_reads(user_id, read_at)')
                 .eq('channel_id', channelId)
                 .order('created_at', { ascending: true })
 
+            if (error) {
+                console.error('Error fetching messages:', error)
+            }
+
             if (data) {
                 setMessages(data as any)
+                // Mark unread messages as read
+                const unreadMessages = data.filter((m: any) =>
+                    m.user_id !== currentUser.id &&
+                    !m.message_reads?.some((r: any) => r.user_id === currentUser.id)
+                )
+
+                if (unreadMessages.length > 0) {
+                    const readsToInsert = unreadMessages.map((m: any) => ({
+                        message_id: m.id,
+                        user_id: currentUser.id
+                    }))
+                    await supabase.from('message_reads').upsert(readsToInsert, { onConflict: 'message_id,user_id', ignoreDuplicates: true })
+                }
             }
         }
 
@@ -76,13 +100,43 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                         .eq('id', payload.new.user_id)
                         .single()
 
+                    let parentMessage = null
+                    if (payload.new.parent_id) {
+                        const { data: parent } = await supabase
+                            .from('messages')
+                            .select('id, content, profiles(username)')
+                            .eq('id', payload.new.parent_id)
+                            .single()
+                        parentMessage = parent
+                    }
+
                     const newMessage = {
                         ...payload.new,
                         profiles: profile,
-                        reactions: []
+                        reactions: [],
+                        parent: parentMessage,
+                        message_reads: []
                     }
 
                     setMessages((prev) => [...prev, newMessage as any])
+
+                    // Play sound if not sent by current user
+                    if (payload.new.user_id !== currentUser.id) {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3')
+                        audio.volume = 0.5
+                        audio.play().catch(e => console.log('Audio play failed', e))
+
+                        // Update document title
+                        document.title = `(1) IBBE_SLACK`
+
+                        // Mark as read immediately if we are viewing the channel
+                        if (document.hasFocus()) {
+                            await supabase.from('message_reads').upsert({
+                                message_id: payload.new.id,
+                                user_id: currentUser.id
+                            }, { onConflict: 'message_id,user_id', ignoreDuplicates: true })
+                        }
+                    }
 
                     setTimeout(() => {
                         gsap.from(".new-msg", {
@@ -114,7 +168,7 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                     // Refresh messages to get updated reactions
                     const { data } = await supabase
                         .from('messages')
-                        .select('*, profiles(username, avatar_url), reactions(*)')
+                        .select('*, profiles(username, avatar_url), reactions(*), parent:messages!parent_id(id, content, profiles(username)), message_reads(user_id, read_at)')
                         .eq('channel_id', channelId)
                         .order('created_at', { ascending: true })
 
@@ -123,12 +177,39 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                     }
                 }
             )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'message_reads',
+                },
+                async (payload) => {
+                    // Update read status locally
+                    setMessages(prev => prev.map(msg => {
+                        if (msg.id === payload.new.message_id) {
+                            return {
+                                ...msg,
+                                message_reads: [...(msg.message_reads || []), { user_id: payload.new.user_id, read_at: payload.new.read_at }]
+                            }
+                        }
+                        return msg
+                    }))
+                }
+            )
             .subscribe()
+
+        // Reset title on focus
+        const handleFocus = () => {
+            document.title = 'IBBE_SLACK'
+        }
+        window.addEventListener('focus', handleFocus)
 
         return () => {
             supabase.removeChannel(channel)
+            window.removeEventListener('focus', handleFocus)
         }
-    }, [channelId, supabase])
+    }, [channelId, supabase, currentUser.id])
 
     useEffect(() => {
         if (containerRef.current) {
@@ -171,6 +252,7 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
             {messages.map((msg, index) => {
                 const isMe = msg.user_id === currentUser.id
                 const isNew = index === messages.length - 1
+                const isRead = msg.message_reads && msg.message_reads.length > 0
 
                 return (
                     <div key={msg.id} className={`msg-row flex items-end gap-3 relative group ${isMe ? 'flex-row-reverse' : ''} ${isNew ? 'new-msg' : ''}`}>
@@ -191,6 +273,14 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
 
                         <div className={`bubble-group flex flex-col gap-1 max-w-[65%] relative ${isMe ? 'items-end' : ''}`}>
 
+                            {/* Reply Context */}
+                            {(msg as any).parent?.id && (
+                                <div className={`text-xs text-gray mb-1 flex items-center gap-1 ${isMe ? 'flex-row-reverse' : ''} opacity-70`}>
+                                    <div className="w-1 h-3 bg-gray-300 rounded-full"></div>
+                                    <span>Replying to <b>{(msg as any).parent.profiles?.username}</b>: "{(msg as any).parent.content?.substring(0, 20)}..."</span>
+                                </div>
+                            )}
+
                             <div
                                 className={`bubble p-3.5 px-4.5 rounded-[20px] border-2 border-charcoal text-[15px] leading-relaxed relative transition-transform hover:-translate-y-0.5 shadow-[4px_4px_0px_rgba(0,0,0,0.05)] hover:shadow-[6px_6px_0px_rgba(0,0,0,0.1)] ${isMe
                                     ? 'bg-charcoal text-bone rounded-br-md'
@@ -198,20 +288,36 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                                     }`}
                             >
                                 {msg.attachments && msg.attachments.length > 0 && (
-                                    <div className="mb-2">
+                                    <div className="mb-2 flex flex-col gap-2">
                                         {msg.attachments.map((att, i) => (
-                                            att.type === 'image' ? (
-                                                <img key={i} src={att.url} alt="attachment" className="max-w-full rounded-lg border border-charcoal/20" />
-                                            ) : (
-                                                <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{att.name}</a>
-                                            )
+                                            <div key={i}>
+                                                {att.type === 'image' ? (
+                                                    <img src={att.url} alt="attachment" className="max-w-full rounded-lg border border-charcoal/20" />
+                                                ) : (
+                                                    <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{att.name}</a>
+                                                )}
+                                                {(att as any).caption && (
+                                                    <div className={`text-[13px] mt-1 italic ${isMe ? 'text-bone/80' : 'text-charcoal/80'}`}>
+                                                        {(att as any).caption}
+                                                    </div>
+                                                )}
+                                            </div>
                                         ))}
                                     </div>
                                 )}
                                 {msg.content && <span>{msg.content}</span>}
 
                                 {/* Action Buttons (Hover) */}
-                                <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-20' : '-right-20'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1`}>
+                                <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-24' : '-right-24'} opacity-0 group-hover:opacity-100 transition-opacity flex gap-1`}>
+                                    {/* Reply Button */}
+                                    <button
+                                        onClick={() => onReply?.(msg)}
+                                        className="p-1.5 rounded-full bg-cream border border-charcoal hover:bg-bone transition-colors"
+                                        title="Reply"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                                    </button>
+
                                     {/* Reaction Button */}
                                     <div className="relative group/picker">
                                         <button className="p-1.5 rounded-full bg-cream border border-charcoal hover:bg-bone transition-colors">
@@ -242,6 +348,14 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                                     )}
                                 </div>
                             </div>
+
+                            {/* Read Receipt Indicator */}
+                            {isMe && isRead && (
+                                <div className="absolute -bottom-4 right-0 text-[10px] text-blue-500 font-bold flex items-center gap-0.5" title="Read by others">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="-ml-2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                            )}
 
                             {/* Reactions Display */}
                             {msg.reactions && msg.reactions.length > 0 && (
