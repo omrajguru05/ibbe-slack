@@ -24,7 +24,7 @@ interface MessageRead {
     read_at: string
 }
 
-interface Message {
+export interface Message {
     id: string
     user_id: string
     content: string

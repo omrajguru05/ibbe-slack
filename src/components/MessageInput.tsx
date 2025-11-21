@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react'
 import { gsap } from 'gsap'
 import { createClient } from '@/utils/supabase/client'
+import { type Message } from '@/components/MessageList'
 
 interface TypingUser {
     username: string
@@ -13,7 +14,7 @@ interface MessageInputProps {
     userId: string
     replyTo?: any
     onCancelReply?: () => void
-    onMessageSent?: (message: any) => void
+    onMessageSent?: (message: Message) => void
 }
 
 export default function MessageInput({ channelId, userId, replyTo, onCancelReply, onMessageSent }: MessageInputProps) {
@@ -165,15 +166,13 @@ export default function MessageInput({ channelId, userId, replyTo, onCancelReply
         }
 
         // Create optimistic message for instant UI update
-        const optimisticMessage = {
+        const optimisticMessage: Message = {
             id: crypto.randomUUID(),
-            channel_id: channelId,
             user_id: userId,
             content: content || (attachments.length > 0 ? 'Sent an image' : ''),
             created_at: new Date().toISOString(),
-            attachments: attachments.length > 0 ? attachments : null,
-            parent_id: replyTo?.id || null,
-            profiles: { username: 'You', avatar_url: null },
+            attachments: attachments.length > 0 ? attachments.map(a => ({ type: a.type as 'image' | 'file', url: a.url, name: a.name })) : undefined,
+            profiles: { username: 'You', avatar_url: '' },
             reactions: [],
             message_reads: []
         }
