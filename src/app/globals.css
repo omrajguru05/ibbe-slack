@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #F7F2E9;
+  --bone: #FFF9F0;
+  --charcoal: #1D1D1F;
+  --gray: #8E8E93;
+  --line: #E8E2D8;
+  --blue: #2962FF;
+  --red: #FF453A;
+  --green: #28C76F;
+  
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  
+  --border-thick: 2px;
+  
+  --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@theme inline {
+  --color-cream: var(--cream);
+  --color-bone: var(--bone);
+  --color-charcoal: var(--charcoal);
+  --color-gray: var(--gray);
+  --color-line: var(--line);
+  --color-blue: var(--blue);
+  --color-red: var(--red);
+  --color-green: var(--green);
+  
+  --radius-xl: var(--radius-xl);
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+}
+
+body {
+  background: var(--cream);
+  color: var(--charcoal);
+  font-family: var(--font-inter), sans-serif;
+}
