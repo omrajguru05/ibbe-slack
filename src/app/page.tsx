@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -14,7 +14,7 @@ export default async function HomePage() {
       .single()
 
     if (profile?.username) {
-      redirect('/chat')
+      redirect('/chat/general')
     } else {
       redirect('/onboarding')
     }

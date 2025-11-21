@@ -20,7 +20,7 @@ export default function MessageInput({ channelId, userId }: MessageInputProps) {
     const typingIndicatorRef = useRef<HTMLDivElement>(null)
     const typingTextRef = useRef<HTMLSpanElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const typingTimeoutRef = useRef<NodeJS.Timeout>()
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
 
     useEffect(() => {

@@ -1,28 +1,6 @@
-import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import ChatHeader from '@/components/ChatHeader'
-import MessageList from '@/components/MessageList'
-import MessageInput from '@/components/MessageInput'
 
-export default async function ChatPage() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-        redirect('/login')
-    }
-
-    const { data: channel } = await supabase
-        .from('channels')
-        .select('*')
-        .eq('slug', 'general-chaos')
-        .single()
-
-    return (
-        <>
-            <ChatHeader />
-            <MessageList channelId={channel?.id} currentUser={user} />
-            <MessageInput channelId={channel?.id} userId={user.id} />
-        </>
-    )
+export default function ChatPage() {
+    // Redirect to general channel by default
+    redirect('/chat/general')
 }

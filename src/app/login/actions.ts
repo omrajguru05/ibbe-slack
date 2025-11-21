@@ -15,11 +15,11 @@ export async function login(formData: FormData) {
     const { error } = await supabase.auth.signInWithPassword(data)
 
     if (error) {
-        redirect('/login?error=Invalid credentials')
+        return { error: 'Invalid credentials' }
     }
 
     revalidatePath('/chat', 'layout')
-    redirect('/chat')
+    redirect('/chat/general')
 }
 
 export async function signup(formData: FormData) {
@@ -33,7 +33,7 @@ export async function signup(formData: FormData) {
     const { error } = await supabase.auth.signUp(data)
 
     if (error) {
-        redirect('/login?error=Signup failed')
+        return { error: 'Signup failed' }
     }
 
     revalidatePath('/onboarding', 'layout')
