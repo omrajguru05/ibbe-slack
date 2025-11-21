@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 import { Upload, ArrowRight, ArrowLeft } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default function OnboardingPage() {
     const [step, setStep] = useState(1)
     const [name, setName] = useState('')
