@@ -175,12 +175,18 @@ export default function MessageList({ channelId, currentUser }: MessageListProps
                 return (
                     <div key={msg.id} className={`msg-row flex items-end gap-3 relative group ${isMe ? 'flex-row-reverse' : ''} ${isNew ? 'new-msg' : ''}`}>
 
-                        <div className="w-9 h-9 rounded-full border-2 border-charcoal overflow-hidden flex-shrink-0">
-                            <img
-                                src={msg.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.user_id}`}
-                                alt={msg.profiles?.username}
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="w-9 h-9 rounded-full border-2 border-charcoal overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                            {msg.profiles?.avatar_url ? (
+                                <img
+                                    src={msg.profiles.avatar_url}
+                                    alt={msg.profiles.username}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-sm font-bold text-charcoal">
+                                    {msg.profiles?.username?.[0]?.toUpperCase() || '?'}
+                                </span>
+                            )}
                         </div>
 
                         <div className={`bubble-group flex flex-col gap-1 max-w-[65%] relative ${isMe ? 'items-end' : ''}`}>
