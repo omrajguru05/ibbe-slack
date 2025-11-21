@@ -168,8 +168,8 @@ export default function Sidebar() {
                                     key={channel.id}
                                     onClick={() => router.push(`/chat/${channel.slug}`)}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all hover:bg-bone border-2 ${currentChannelSlug === channel.slug
-                                            ? 'bg-bone border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]'
-                                            : 'border-transparent'
+                                        ? 'bg-bone border-charcoal shadow-[4px_4px_0px_rgba(0,0,0,1)] translate-x-[-2px] translate-y-[-2px]'
+                                        : 'border-transparent'
                                         }`}
                                 >
                                     <Hash size={16} className="text-gray" />
@@ -188,8 +188,12 @@ export default function Sidebar() {
                             {onlineUsers.map((user) => (
                                 <div key={user.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors">
                                     <div className="relative">
-                                        <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden">
-                                            <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                        <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden bg-gray-200 flex items-center justify-center">
+                                            {user.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-xs font-bold text-charcoal">{user.username?.[0]?.toUpperCase() || '?'}</span>
+                                            )}
                                         </div>
                                         <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-cream rounded-full"></div>
                                     </div>
@@ -211,8 +215,12 @@ export default function Sidebar() {
                                 {offlineUsers.map((user) => (
                                     <div key={user.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-bone transition-colors opacity-60">
                                         <div className="relative">
-                                            <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden">
-                                                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                            <div className="w-7 h-7 rounded-full border-2 border-charcoal overflow-hidden bg-gray-200 flex items-center justify-center">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-charcoal">{user.username?.[0]?.toUpperCase() || '?'}</span>
+                                                )}
                                             </div>
                                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-gray-400 border-2 border-cream rounded-full"></div>
                                         </div>
@@ -227,8 +235,12 @@ export default function Sidebar() {
                 {/* User Footer */}
                 <div className="p-4 border-t-2 border-charcoal bg-bone">
                     <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-cream cursor-pointer transition-colors group" onClick={handleLogout}>
-                        <div className="w-8 h-8 rounded-full bg-charcoal overflow-hidden relative">
-                            <img src={users.find(u => u.id === currentUserId)?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'} alt="User" />
+                        <div className="w-8 h-8 rounded-full bg-charcoal overflow-hidden relative flex items-center justify-center">
+                            {users.find(u => u.id === currentUserId)?.avatar_url ? (
+                                <img src={users.find(u => u.id === currentUserId)?.avatar_url} alt="User" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-sm font-bold text-bone">{users.find(u => u.id === currentUserId)?.username?.[0]?.toUpperCase() || 'U'}</span>
+                            )}
                             <div className="absolute inset-0 bg-black/20 hidden group-hover:flex items-center justify-center">
                                 <LogOut size={12} className="text-white" />
                             </div>

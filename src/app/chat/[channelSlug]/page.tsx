@@ -27,7 +27,7 @@ export default async function ChannelPage({ params }: { params: { channelSlug: s
     }
 
     return (
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
             <ChatHeader channelName={channel.name} channelSlug={channel.slug} />
             <MessageList channelId={channel.id} currentUser={user} />
             <MessageInput channelId={channel.id} userId={user.id} />
