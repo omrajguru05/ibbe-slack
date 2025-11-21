@@ -22,12 +22,19 @@ export default async function ChannelPage({ params }: { params: { channelSlug: s
         .single()
 
     if (error || !channel) {
-        // Channel doesn't exist, redirect to general
+        // Channel doesn't exist
+        if (channelSlug === 'general') {
+            return (
+                <div className="flex-1 flex items-center justify-center text-charcoal font-mono">
+                    Error: General channel not found. Please contact support.
+                </div>
+            )
+        }
         redirect('/chat/general')
     }
 
     return (
-        <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
             <ChatHeader channelName={channel.name} channelSlug={channel.slug} />
             <MessageList channelId={channel.id} currentUser={user} />
             <MessageInput channelId={channel.id} userId={user.id} />
