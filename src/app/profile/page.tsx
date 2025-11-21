@@ -5,6 +5,9 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { gsap } from 'gsap'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true)
     const [username, setUsername] = useState('')

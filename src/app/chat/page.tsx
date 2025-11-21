@@ -4,6 +4,8 @@ import ChatHeader from '@/components/ChatHeader'
 import MessageList from '@/components/MessageList'
 import MessageInput from '@/components/MessageInput'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ChatPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
